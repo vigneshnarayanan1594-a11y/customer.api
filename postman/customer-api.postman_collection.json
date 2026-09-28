@@ -1,0 +1,91 @@
+{
+  "info": {
+    "name": "customer.api",
+    "description": "Insurance policy data service — every endpoint of the assessment. Set baseUrl, then run the requests top to bottom. The upload request expects data/sample.csv from the repo (re-select the file if Postman can't find it).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000" },
+    { "key": "userId", "value": "" },
+    { "key": "scheduledId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "request": { "method": "GET", "url": "{{baseUrl}}/health" }
+    },
+    {
+      "name": "Task 1.1 — Upload sheet (CSV/XLSX)",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/uploads",
+        "body": {
+          "mode": "formdata",
+          "formdata": [{ "key": "file", "type": "file", "src": "data/sample.csv" }]
+        }
+      }
+    },
+    {
+      "name": "Task 1.2 — Search policies by username",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const policies = pm.response.json().data.policies;",
+              "if (policies && policies.length) pm.collectionVariables.set('userId', policies[0].user.id);"
+            ]
+          }
+        }
+      ],
+      "request": { "method": "GET", "url": "{{baseUrl}}/api/policies/search?username=lura&page=1&limit=20" }
+    },
+    {
+      "name": "Task 1.3 — Aggregated policies per user",
+      "request": { "method": "GET", "url": "{{baseUrl}}/api/policies/aggregate/by-user?page=1&limit=20" }
+    },
+    {
+      "name": "Task 1.3 — Aggregated policies for one user",
+      "request": { "method": "GET", "url": "{{baseUrl}}/api/policies/aggregate/by-user?userId={{userId}}" }
+    },
+    {
+      "name": "Task 2.2 — Schedule a message",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": ["pm.collectionVariables.set('scheduledId', pm.response.json().data.id);"]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/messages/schedule",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"message\": \"Policy renewal reminder\",\n  \"day\": \"friday\",\n  \"time\": \"10:00\",\n  \"timezone\": \"Asia/Kolkata\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Task 2.2 — Scheduled message status",
+      "request": { "method": "GET", "url": "{{baseUrl}}/api/messages/schedule/{{scheduledId}}" }
+    },
+    {
+      "name": "Task 2.2 — Inserted messages",
+      "request": { "method": "GET", "url": "{{baseUrl}}/api/messages?page=1&limit=20" }
+    },
+    {
+      "name": "Task 2.1 — CPU burn (needs ENABLE_DEBUG_ROUTES=true)",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/debug/cpu-burn",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"seconds\": 15,\n  \"mode\": \"yield\"\n}" }
+      }
+    }
+  ]
+}

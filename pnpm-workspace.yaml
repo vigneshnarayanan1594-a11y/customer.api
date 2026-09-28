@@ -1,0 +1,9 @@
+# pnpm 11 refuses to install until every dependency install script is explicitly allowed or denied.
+allowBuilds:
+  # Our e2e tests' dependency: downloads the MongoDB binary they run against
+  # (without it, the binary is fetched on the first test run instead).
+  mongodb-memory-server: true
+  # Jest dependencies whose scripts only compile or fetch a native binary when the prebuilt
+  # platform package is missing. pnpm installs the prebuilt one, so the scripts aren't needed.
+  '@parcel/watcher': false
+  unrs-resolver: false
